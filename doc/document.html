@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZKP Go SDK — Developer Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0f1117;
+      --bg2:         #161b22;
+      --bg3:         #1c2330;
+      --border:      #30363d;
+      --text:        #e6edf3;
+      --text-muted:  #8b949e;
+      --accent:      #58a6ff;
+      --accent2:     #3fb950;
+      --accent3:     #f78166;
+      --accent4:     #d2a8ff;
+      --warn:        #d29922;
+      --info:        #79c0ff;
+      --code-bg:     #161b22;
+      --sidebar-w:   272px;
+      --radius:      8px;
+      --font-mono:   'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo .product {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .sidebar-logo .title { font-size: 17px; font-weight: 700; color: var(--text); margin-top: 3px; }
+    .sidebar-logo .badge {
+      display: inline-block; margin-top: 7px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 11px; font-family: var(--font-mono);
+      padding: 1px 8px; color: var(--text-muted);
+    }
+
+    .sidebar nav { padding: 10px 0 24px; flex: 1; }
+
+    .nav-section {
+      padding: 14px 20px 4px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+
+    .sidebar a {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      transition: background .12s, color .12s;
+      border-left: 3px solid transparent;
+    }
+    .sidebar a:hover { background: var(--bg3); color: var(--text); }
+    .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(88,166,255,.07); }
+
+    /* ── Main ────────────────────────────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      max-width: 920px;
+      padding: 48px 56px 100px;
+      min-width: 0;
+    }
+
+    section { margin-bottom: 72px; scroll-margin-top: 24px; }
+
+    h1 { font-size: 30px; font-weight: 800; margin-bottom: 14px; }
+    h2 {
+      font-size: 21px; font-weight: 700;
+      margin: 0 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 { font-size: 15.5px; font-weight: 600; color: var(--text); margin: 28px 0 10px; }
+    h4 { font-size: 13px; font-weight: 600; color: var(--text-muted); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: .05em; }
+
+    p { margin-bottom: 14px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; }
+    li { margin-bottom: 5px; }
+    strong { color: var(--text); font-weight: 600; }
+
+    code {
+      font-family: var(--font-mono); font-size: 13px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 4px; padding: 1px 6px; color: var(--accent4);
+    }
+
+    /* ── Code blocks ─────────────────────────────────────────────────── */
+    .code-block {
+      position: relative;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin: 12px 0 22px;
+    }
+    .code-block-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .code-lang {
+      font-size: 11px; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+    .copy-btn {
+      background: none; border: 1px solid var(--border);
+      border-radius: 5px; padding: 3px 10px;
+      color: var(--text-muted); font-size: 12px; cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .copy-btn:hover { background: var(--bg); color: var(--text); }
+    .copy-btn.copied { color: var(--accent2); border-color: var(--accent2); }
+
+    pre {
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    /* Go syntax colouring */
+    .kw  { color: #ff7b72; }   /* keywords */
+    .fn  { color: #d2a8ff; }   /* function names */
+    .st  { color: #a5d6ff; }   /* strings */
+    .cm  { color: #8b949e; font-style: italic; }  /* comments */
+    .nu  { color: #79c0ff; }   /* numbers / consts */
+    .ty  { color: #ffa657; }   /* types */
+    .op  { color: #e6edf3; }   /* operators / punctuation */
+
+    /* ── Tables ──────────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin-bottom: 22px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th {
+      background: var(--bg3); color: var(--text-muted);
+      font-size: 11px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; text-align: left;
+      padding: 8px 14px; border-bottom: 1px solid var(--border);
+    }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(88,166,255,.04); }
+
+    /* ── Callout boxes ───────────────────────────────────────────────── */
+    .callout {
+      display: flex; gap: 12px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin: 16px 0 22px;
+      font-size: 14px;
+      border-left: 3px solid;
+    }
+    .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .callout.info  { background: rgba(88,166,255,.08);  border-color: var(--accent);  }
+    .callout.warn  { background: rgba(210,153,34,.1);   border-color: var(--warn);    }
+    .callout.tip   { background: rgba(63,185,80,.08);   border-color: var(--accent2); }
+    .callout.danger{ background: rgba(247,129,102,.08); border-color: var(--accent3); }
+
+    /* ── Step flow ───────────────────────────────────────────────────── */
+    .steps { list-style: none; padding: 0; margin: 16px 0 24px; }
+    .steps li {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .steps li:last-child { border-bottom: none; }
+    .step-num {
+      display: flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; flex-shrink: 0;
+      border-radius: 50%;
+      background: rgba(88,166,255,.15);
+      color: var(--accent); font-size: 12px; font-weight: 700;
+      margin-top: 2px;
+    }
+    .step-body strong { display: block; margin-bottom: 3px; font-size: 14px; }
+    .step-body span { font-size: 13.5px; color: var(--text-muted); }
+
+    /* ── Method signature ────────────────────────────────────────────── */
+    .method-sig {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      margin: 8px 0 16px;
+      color: var(--accent4);
+      overflow-x: auto;
+    }
+
+    /* ── Badge ───────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      font-size: 10.5px; font-weight: 700; font-family: var(--font-mono);
+      padding: 2px 7px; border-radius: 4px; vertical-align: middle;
+    }
+    .badge-auth { background: rgba(88,166,255,.15); color: var(--accent); }
+    .badge-no-auth { background: rgba(63,185,80,.12); color: var(--accent2); }
+    .badge-post { background: rgba(88,166,255,.15); color: var(--accent); }
+    .badge-get  { background: rgba(63,185,80,.12);  color: var(--accent2); }
+    .badge-err  { background: rgba(247,129,102,.15); color: var(--accent3); }
+
+    /* ── Hero ────────────────────────────────────────────────────────── */
+    .hero-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+    .hero-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 12.5px; color: var(--text-muted);
+    }
+    .hero-pill .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .dot-green { background: var(--accent2); }
+    .dot-blue  { background: var(--accent); }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ SIDEBAR ═══════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="product">ZKClaimUpload</div>
+    <div class="title">Go SDK Guide</div>
+    <span class="badge">v1.0.0 · Go 1.22+</span>
+  </div>
+  <nav>
+    <div class="nav-section">Getting Started</div>
+    <a href="#overview">Overview</a>
+    <a href="#install">Installation</a>
+    <a href="#quickstart">Quick Start</a>
+
+    <div class="nav-section">Protocol Flows</div>
+    <a href="#flow-upload">File Upload</a>
+    <a href="#flow-batch">Batch Upload</a>
+    <a href="#flow-download">File Download</a>
+    <a href="#flow-share">Share a File</a>
+    <a href="#flow-grantee">Grantee Access</a>
+
+    <div class="nav-section">Crypto Sub-package</div>
+    <a href="#crypto-keys">Key Management</a>
+    <a href="#crypto-ecies">ECIES Encryption</a>
+    <a href="#crypto-field">BN254 Field</a>
+
+    <div class="nav-section">Client Reference</div>
+    <a href="#config">Configuration</a>
+    <a href="#errors">Error Handling</a>
+    <a href="#api-ref">API Methods</a>
+    <a href="#types-ref">Types</a>
+
+    <div class="nav-section">Guides</div>
+    <a href="#security">Security</a>
+    <a href="#compat">Compatibility</a>
+  </nav>
+</aside>
+
+<!-- ═══════════════════════════════════ MAIN ══════════════════════════════════ -->
+<main class="main">
+
+  <!-- ── Overview ─────────────────────────────────────────────────────────── -->
+  <section id="overview">
+    <h1>ZKP Go SDK — Developer Guide</h1>
+    <div class="hero-meta">
+      <span class="hero-pill"><span class="dot dot-green"></span>module github.com/ssanjeewa/go-sdk</span>
+      <span class="hero-pill"><span class="dot dot-blue"></span>Go 1.22+</span>
+      <span class="hero-pill"><span class="dot dot-green"></span>Arbitrum Sepolia · chain 421614</span>
+    </div>
+
+    <p>
+      The <strong>ZKP Go SDK</strong> is a client library for the ZKClaimUpload protocol —
+      a request-scoped zero-knowledge authorization system for decentralized file access control
+      on Arbitrum Sepolia. The SDK wraps the ZKP middleware HTTP API with idiomatic Go types,
+      input validation, retry logic, and standalone ECIES crypto helpers.
+    </p>
+
+    <h3>Architecture overview</h3>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-lang">text</span></div>
+      <pre>
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  Your application                                                │
+  │                                                                  │
+  │   zkp.NewClient(baseURL, WithAPIKey(...))                         │
+  │        │                                                         │
+  │        ├── IssueCredential  ──►  ZKP Middleware (Go HTTP)        │
+  │        ├── GenerateProof    ──►  Groth16 proof (~600 ms)         │
+  │        ├── PrepareShare     ──►  Delegate credential             │
+  │        └── GetUserPubKey    ──►  On-chain registry lookup        │
+  │                                                                  │
+  │   zkpcrypto.GenerateKeyPair()   ◄── standalone, no HTTP          │
+  │   zkpcrypto.EncryptSecret(...)                                   │
+  │   zkpcrypto.DecryptSecret(...)                                   │
+  └──────────────────────────────────────────────────────────────────┘
+              │                              │
+              ▼                              ▼
+      ZKP Middleware              Arbitrum Sepolia (chain 421614)
+      (issue + prove)             ZKClaimRegistryV3 / ServiceV3/V4
+      </pre>
+    </div>
+
+    <h3>Two packages</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Package</th><th>Import path</th><th>Purpose</th></tr>
+        <tr>
+          <td><code>zkp</code></td>
+          <td><code>github.com/ssanjeewa/go-sdk</code></td>
+          <td>HTTP client — credential issuance, proof generation, share management, user lookups</td>
+        </tr>
+        <tr>
+          <td><code>zkpcrypto</code></td>
+          <td><code>github.com/ssanjeewa/go-sdk/crypto</code></td>
+          <td>Standalone crypto — secp256k1 key pairs, ECIES encrypt/decrypt, BN254 field validation</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div>The <code>crypto</code> sub-package has <strong>no HTTP dependency</strong>. Import it alone when you only need key management or ECIES operations (e.g. in a browser-side WASM build or a minimal CLI tool).</div>
+    </div>
+  </section>
+
+  <!-- ── Installation ──────────────────────────────────────────────────────── -->
+  <section id="install">
+    <h2>Installation</h2>
+
+    <h3>Full SDK (HTTP client + crypto)</h3>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>go get github.com/ssanjeewa/go-sdk@latest</pre>
+    </div>
+
+    <h3>Crypto sub-package only</h3>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>go get github.com/ssanjeewa/go-sdk/crypto@latest</pre>
+    </div>
+
+    <h3>Requirements</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Requirement</th><th>Version</th></tr>
+        <tr><td>Go</td><td>1.22 or later</td></tr>
+        <tr><td>ZKP Middleware</td><td>v1.x (Arbitrum Sepolia, depth-24 circuit)</td></tr>
+        <tr><td>secp256k1 library</td><td><code>github.com/decred/dcrd/dcrec/secp256k1/v4</code> v4.3.0</td></tr>
+        <tr><td>Keccak / SHA3</td><td><code>golang.org/x/crypto</code> v0.17.0</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Quick Start ───────────────────────────────────────────────────────── -->
+  <section id="quickstart">
+    <h2>Quick Start</h2>
+    <p>This minimal example checks the middleware health, generates a key pair, issues a credential, and generates a proof — the two most common operations.</p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="st">"context"</span>
+    <span class="st">"fmt"</span>
+    <span class="st">"log"</span>
+    <span class="st">"os"</span>
+
+    zkp       <span class="st">"github.com/ssanjeewa/go-sdk"</span>
+    zkpcrypto <span class="st">"github.com/ssanjeewa/go-sdk/crypto"</span>
+)
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    ctx := context.<span class="fn">Background</span>()
+
+    <span class="cm">// ── 1. Create the client ──────────────────────────────────────</span>
+    client, err := zkp.<span class="fn">NewClient</span>(
+        <span class="st">"http://localhost:3002"</span>,
+        zkp.<span class="fn">WithAPIKey</span>(os.<span class="fn">Getenv</span>(<span class="st">"ZKP_API_KEY"</span>)),
+    )
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    <span class="cm">// ── 2. Check middleware health ────────────────────────────────</span>
+    health, err := client.<span class="fn">Health</span>(ctx)
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+    fmt.<span class="fn">Printf</span>(<span class="st">"status=%s chainId=%d\n"</span>, health.Status, health.ChainID)
+
+    <span class="cm">// ── 3. Generate a secp256k1 key pair ──────────────────────────</span>
+    kp, err := zkpcrypto.<span class="fn">GenerateKeyPair</span>()
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+    fmt.<span class="fn">Println</span>(<span class="st">"privateKey:"</span>, kp.PrivateKey) <span class="cm">// store securely!</span>
+    fmt.<span class="fn">Println</span>(<span class="st">"publicKey: "</span>, kp.PublicKey)
+
+    <span class="cm">// ── 4. Issue a credential ─────────────────────────────────────</span>
+    resp, err := client.<span class="fn">IssueCredential</span>(ctx, &amp;zkp.IssueCredentialRequest{
+        UserAddress:   <span class="st">"0xYourWalletAddress"</span>,
+        FileID:        <span class="st">"0xYourFileID...32bytes...hex"</span>,
+        UserPublicKey: kp.PublicKey,
+    })
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    claimFile := resp.ClaimFile
+    fmt.<span class="fn">Printf</span>(<span class="st">"leafIndex=%d  commitment=%s\n"</span>,
+        claimFile.LeafIndex, claimFile.Commitment)
+    <span class="cm">// Submit resp.InsertCalldata on-chain (batchInsertLeaves)</span>
+
+    <span class="cm">// ── 5. Later: decrypt and generate a proof ───────────────────</span>
+    secret, err := zkpcrypto.<span class="fn">DecryptSecret</span>(
+        claimFile.EncryptedSecret, kp.PrivateKey,
+    )
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    proof, err := client.<span class="fn">GenerateProof</span>(ctx, &amp;zkp.GenerateProofRequest{
+        UserAddress: <span class="st">"0xYourWalletAddress"</span>,
+        FileID:      claimFile.FileID,
+        N:           secret.N.<span class="fn">String</span>(),
+        S:           secret.S.<span class="fn">String</span>(),
+        LeafIndex:   claimFile.LeafIndex,
+    })
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    fmt.<span class="fn">Println</span>(<span class="st">"nullifier:"</span>, proof.RequestNullifier)
+    <span class="cm">// Submit proof.Calldata on-chain (executeRequest)</span>
+}
+      </pre>
+    </div>
+  </section>
+
+  <!-- ── Flow: File Upload ──────────────────────────────────────────────────── -->
+  <section id="flow-upload">
+    <h2>Flow 1 — File Upload</h2>
+    <p>
+      Before a user can generate ZK proofs for a file, the file must be registered on-chain
+      and a credential must be issued by the middleware. The upload flow has four steps:
+    </p>
+
+    <ul class="steps">
+      <li>
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <strong>Register public key on-chain</strong>
+          <span>Call <code>ZKClaimUserRegistry.registerPublicKey(pubKey)</code> with your secp256k1 public key. This is a one-time on-chain transaction per wallet. Required so the middleware can encrypt credentials for you.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <strong>Create file record on-chain</strong>
+          <span>Call <code>ZKClaimServiceV3.createFile(fileId, metaHash, keyCommit)</code>. This registers ownership and the encrypted file key on-chain. Submit as a UserOp via your ERC-4337 smart account.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <strong>Issue credential via SDK</strong>
+          <span>Call <code>client.IssueCredential(...)</code>. The middleware generates the (n, s) secrets, computes the Poseidon commitment, encrypts the secrets with your public key, and returns a <code>ClaimFile</code> and <code>InsertCalldata</code>.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <div class="step-body">
+          <strong>Submit InsertCalldata on-chain</strong>
+          <span>Submit <code>InsertCalldata</code> (encodes <code>batchInsertLeaves</code>) as a sponsored UserOp. This inserts your credential commitment into your personal Merkle tree.</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="kw">import</span> (
+    <span class="st">"context"</span>
+    <span class="st">"encoding/json"</span>
+    <span class="st">"fmt"</span>
+    <span class="st">"log"</span>
+
+    zkp       <span class="st">"github.com/ssanjeewa/go-sdk"</span>
+    zkpcrypto <span class="st">"github.com/ssanjeewa/go-sdk/crypto"</span>
+)
+
+<span class="kw">func</span> <span class="fn">uploadFile</span>(client *zkp.ZKPClient, userAddr, fileID <span class="ty">string</span>) {
+    ctx := context.<span class="fn">Background</span>()
+
+    <span class="cm">// Step 1: Generate (or load) your secp256k1 key pair.</span>
+    <span class="cm">// The private key must be stored securely — you need it every time</span>
+    <span class="cm">// you want to download the file or delegate access.</span>
+    kp, err := zkpcrypto.<span class="fn">GenerateKeyPair</span>()
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    <span class="cm">// Step 2: Issue credential — middleware generates (n, s), commitment,</span>
+    <span class="cm">// and encrypts the secrets with kp.PublicKey via ECIES.</span>
+    resp, err := client.<span class="fn">IssueCredential</span>(ctx, &amp;zkp.IssueCredentialRequest{
+        UserAddress:   userAddr,
+        FileID:        fileID,
+        UserPublicKey: kp.PublicKey,
+    })
+    <span class="kw">if</span> err != <span class="nu">nil</span> {
+        log.<span class="fn">Fatalf</span>(<span class="st">"IssueCredential: %v"</span>, err)
+    }
+
+    <span class="cm">// Step 3: Persist the ClaimFile — required for proof generation later.</span>
+    claimJSON, _ := json.<span class="fn">MarshalIndent</span>(resp.ClaimFile, <span class="st">""</span>, <span class="st">"  "</span>)
+    fmt.<span class="fn">Println</span>(<span class="st">"Save this ClaimFile:"</span>, <span class="ty">string</span>(claimJSON))
+
+    <span class="cm">// Step 4: Submit InsertCalldata on-chain.</span>
+    <span class="cm">// resp.InsertCalldata encodes batchInsertLeaves([commitment]).</span>
+    fmt.<span class="fn">Printf</span>(<span class="st">"Submit on-chain:\n  to:    %s\n  data:  %s\n  value: %s\n"</span>,
+        resp.InsertCalldata.To,
+        resp.InsertCalldata.Data,
+        resp.InsertCalldata.Value,
+    )
+}
+      </pre>
+    </div>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠</span>
+      <div>
+        <strong>Store the ClaimFile and private key securely.</strong>
+        The <code>EncryptedSecret</code> in the ClaimFile is needed to decrypt (n, s) for proof generation.
+        Without them, the file cannot be accessed. The private key must never be logged or serialized to disk unencrypted.
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Flow: Batch Upload ─────────────────────────────────────────────────── -->
+  <section id="flow-batch">
+    <h2>Flow 2 — Batch Upload</h2>
+    <p>
+      Issue credentials for up to <strong>20 files</strong> in a single API call.
+      The middleware uses a single <code>GetNextLeafIndex</code> call (preventing leaf-index collisions)
+      and returns one <code>InsertCalldata</code> covering all N leaves.
+    </p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="kw">func</span> <span class="fn">batchUpload</span>(client *zkp.ZKPClient, userAddr <span class="ty">string</span>, pubKey <span class="ty">string</span>, fileIDs []<span class="ty">string</span>) {
+    ctx := context.<span class="fn">Background</span>()
+
+    <span class="cm">// Build per-file request entries (max 20).</span>
+    files := <span class="fn">make</span>([]zkp.BatchFileRequest, <span class="fn">len</span>(fileIDs))
+    <span class="kw">for</span> i, id := <span class="kw">range</span> fileIDs {
+        files[i] = zkp.BatchFileRequest{FileID: id}
+    }
+
+    resp, err := client.<span class="fn">IssueCredentialBatch</span>(ctx, &amp;zkp.BatchIssueCredentialRequest{
+        UserAddress:   userAddr,
+        UserPublicKey: pubKey,
+        Files:         files,
+    })
+    <span class="kw">if</span> err != <span class="nu">nil</span> {
+        log.<span class="fn">Fatalf</span>(<span class="st">"IssueCredentialBatch: %v"</span>, err)
+    }
+
+    <span class="cm">// Each Credentials[i].ClaimFile corresponds to fileIDs[i].</span>
+    <span class="kw">for</span> i, cred := <span class="kw">range</span> resp.Credentials {
+        fmt.<span class="fn">Printf</span>(<span class="st">"[%d] leafIndex=%d  fileId=%s\n"</span>,
+            i, cred.ClaimFile.LeafIndex, cred.ClaimFile.FileID)
+    }
+
+    <span class="cm">// ONE calldata for all N leaves — submit once via batchInsertLeaves.</span>
+    fmt.<span class="fn">Println</span>(<span class="st">"Single InsertCalldata to submit:"</span>, resp.InsertCalldata.To)
+}
+      </pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">✓</span>
+      <div>Batch issuance saves gas and reduces on-chain round-trips. Use it whenever a user uploads multiple files in the same session.</div>
+    </div>
+  </section>
+
+  <!-- ── Flow: File Download ────────────────────────────────────────────────── -->
+  <section id="flow-download">
+    <h2>Flow 3 — File Download (Access)</h2>
+    <p>
+      To access a file, the user proves ownership of a credential in their Merkle tree without
+      revealing the secret. The flow has three steps:
+    </p>
+
+    <ul class="steps">
+      <li>
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <strong>Decrypt credential secrets</strong>
+          <span>Use <code>zkpcrypto.DecryptSecret</code> with the <code>EncryptedSecret</code> from your ClaimFile and your private key to recover (n, s).</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <strong>Generate Groth16 proof</strong>
+          <span>Call <code>client.GenerateProof(...)</code> with the decrypted (n, s), userAddress, fileId, and leafIndex. The middleware fetches the Merkle path, computes the proof (~600 ms), and returns a Solidity-ready proof + calldata.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <strong>Submit executeRequest calldata on-chain</strong>
+          <span>Submit <code>Calldata</code> (encodes <code>executeRequest</code>) as a UserOp. The contract verifies the proof, marks the nullifier used, and emits <code>KeyReleased</code> with the encrypted file key.</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="kw">func</span> <span class="fn">downloadFile</span>(client *zkp.ZKPClient, claimFile *zkp.ClaimFile, privKey <span class="ty">string</span>) {
+    ctx := context.<span class="fn">Background</span>()
+
+    <span class="cm">// Step 1: Decrypt (n, s) from the ClaimFile.</span>
+    <span class="cm">// The private key never leaves this function — do NOT log it.</span>
+    secret, err := zkpcrypto.<span class="fn">DecryptSecret</span>(claimFile.EncryptedSecret, privKey)
+    <span class="kw">if</span> err != <span class="nu">nil</span> {
+        log.<span class="fn">Fatalf</span>(<span class="st">"DecryptSecret: %v"</span>, err)
+    }
+
+    <span class="cm">// Step 2: Generate proof.</span>
+    <span class="cm">// n and s are validated against the BN254 scalar field before the HTTP</span>
+    <span class="cm">// call — an out-of-range value returns *ValidationError immediately.</span>
+    proof, err := client.<span class="fn">GenerateProof</span>(ctx, &amp;zkp.GenerateProofRequest{
+        UserAddress: claimFile.UserAddress,
+        FileID:      claimFile.FileID,
+        N:           secret.N.<span class="fn">String</span>(),  <span class="cm">// decimal string</span>
+        S:           secret.S.<span class="fn">String</span>(),  <span class="cm">// decimal string</span>
+        LeafIndex:   claimFile.LeafIndex,
+    })
+    <span class="kw">if</span> err != <span class="nu">nil</span> {
+        log.<span class="fn">Fatalf</span>(<span class="st">"GenerateProof: %v"</span>, err)
+    }
+
+    fmt.<span class="fn">Println</span>(<span class="st">"requestNullifier:"</span>, proof.RequestNullifier)
+    fmt.<span class="fn">Println</span>(<span class="st">"reqId:            "</span>, proof.ReqID)
+
+    <span class="cm">// Step 3: Submit on-chain.</span>
+    <span class="cm">// proof.Calldata encodes executeRequest(fileId, reqId, rn, a, b, c, signals, "").</span>
+    fmt.<span class="fn">Printf</span>(<span class="st">"Submit:\n  to:   %s\n  data: %s\n"</span>,
+        proof.Calldata.To,
+        proof.Calldata.Data[:20]+<span class="st">"..."</span>,
+    )
+    <span class="cm">// After on-chain success, listen for the KeyReleased event to get</span>
+    <span class="cm">// the encrypted AES file key, then decrypt the file.</span>
+}
+      </pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div>
+        Each call to <code>GenerateProof</code> consumes one <code>reqId</code> counter slot on-chain.
+        Nullifiers are stored permanently — the same (n, scope, reqId) combination cannot be reused.
+        This is by design: it prevents replay attacks while allowing the same credential to be used
+        for multiple requests.
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Flow: Share a File ─────────────────────────────────────────────────── -->
+  <section id="flow-share">
+    <h2>Flow 4 — Share a File</h2>
+    <p>
+      The owner can delegate access to any registered user (grantee) by re-encrypting the
+      credential secrets for them and preparing a share on-chain.
+    </p>
+
+    <ul class="steps">
+      <li>
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <strong>Fetch grantee's public key</strong>
+          <span>Call <code>client.GetUserPubKey(ctx, granteeAddress)</code>. Returns the 65-byte uncompressed secp256k1 key that the grantee registered on-chain. Returns <code>Registered: false</code> if the grantee has not yet registered.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <strong>Decrypt your own secrets and re-encrypt for grantee</strong>
+          <span>Decrypt (n, s) from your ClaimFile, then call <code>zkpcrypto.EncryptSecret(granteePubKey, n, s)</code> to produce an ECIES blob only the grantee can decrypt.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <strong>Prepare share via SDK</strong>
+          <span>Call <code>client.PrepareShare(...)</code>. The middleware issues a fresh delegated credential for the grantee, computes a new commitment, and returns <code>InsertCalldata</code> + <code>GrantShareCalldata</code>.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <div class="step-body">
+          <strong>Submit both calldatas on-chain</strong>
+          <span>Submit <code>InsertCalldata</code> first (inserts grantee leaf), then <code>GrantShareCalldata</code> (records the share grant). Send the <code>EncryptedCredential</code> to the grantee out-of-band.</span>
+        </div>
+      </li>
+    </ul>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="kw">func</span> <span class="fn">shareFile</span>(
+    client      *zkp.ZKPClient,
+    claimFile   *zkp.ClaimFile,
+    ownerPrivKey <span class="ty">string</span>,
+    granteeAddr  <span class="ty">string</span>,
+) {
+    ctx := context.<span class="fn">Background</span>()
+
+    <span class="cm">// Step 1: Fetch grantee's on-chain public key.</span>
+    pubKeyResp, err := client.<span class="fn">GetUserPubKey</span>(ctx, granteeAddr)
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+    <span class="kw">if</span> !pubKeyResp.Registered {
+        log.<span class="fn">Fatalf</span>(<span class="st">"grantee %s has not registered a public key"</span>, granteeAddr)
+    }
+
+    <span class="cm">// Step 2: Decrypt your own (n, s) and re-encrypt for grantee.</span>
+    secret, err := zkpcrypto.<span class="fn">DecryptSecret</span>(claimFile.EncryptedSecret, ownerPrivKey)
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    encForGrantee, err := zkpcrypto.<span class="fn">EncryptSecret</span>(pubKeyResp.PubKey, secret.N, secret.S)
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    <span class="cm">// Step 3: Prepare the share — middleware issues delegated credential.</span>
+    shareResp, err := client.<span class="fn">PrepareShare</span>(ctx, &amp;zkp.SharePrepareRequest{
+        FileID:                 claimFile.FileID,
+        GranteeAddress:         granteeAddr,
+        GranteePublicKey:       pubKeyResp.PubKey,
+        EncryptedKeyForGrantee: encForGrantee,
+    })
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    fmt.<span class="fn">Printf</span>(<span class="st">"grantee leafIndex: %d\n"</span>, shareResp.LeafIndex)
+
+    <span class="cm">// Step 4: Submit both calldatas on-chain (order matters!).</span>
+    <span class="cm">// 1. InsertCalldata  → batchInsertLeaves (grantee's Merkle tree)</span>
+    <span class="cm">// 2. GrantShareCalldata → grantShare (ZKClaimServiceV4)</span>
+    fmt.<span class="fn">Println</span>(<span class="st">"InsertCalldata:"</span>,     shareResp.InsertCalldata.To)
+    fmt.<span class="fn">Println</span>(<span class="st">"GrantShareCalldata:"</span>, shareResp.GrantShareCalldata.To)
+
+    <span class="cm">// Send EncryptedCredential to the grantee through a secure channel.</span>
+    fmt.<span class="fn">Println</span>(<span class="st">"Send to grantee:"</span>, shareResp.EncryptedCredential[:20]+<span class="st">"..."</span>)
+}
+      </pre>
+    </div>
+  </section>
+
+  <!-- ── Flow: Grantee Access ───────────────────────────────────────────────── -->
+  <section id="flow-grantee">
+    <h2>Flow 5 — Grantee File Access</h2>
+    <p>
+      A grantee who has received an <code>EncryptedCredential</code> from an owner can list
+      their incoming shares and generate proofs to access the shared files.
+    </p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="kw">func</span> <span class="fn">granteeAccess</span>(client *zkp.ZKPClient, granteeAddr, granteePrivKey <span class="ty">string</span>) {
+    ctx := context.<span class="fn">Background</span>()
+
+    <span class="cm">// Step 1: List all shares granted to this address.</span>
+    sharesResp, err := client.<span class="fn">IncomingShares</span>(ctx, granteeAddr)
+    <span class="kw">if</span> err != <span class="nu">nil</span> { log.<span class="fn">Fatal</span>(err) }
+
+    <span class="kw">for</span> _, share := <span class="kw">range</span> sharesResp.Shares {
+        <span class="kw">if</span> !share.Active {
+            <span class="kw">continue</span> <span class="cm">// share was revoked</span>
+        }
+
+        fmt.<span class="fn">Printf</span>(<span class="st">"Shared file: %s  from: %s\n"</span>, share.FileID, share.Owner)
+
+        <span class="cm">// Step 2: Decrypt the credential the owner sent out-of-band.</span>
+        <span class="cm">// share.EncryptedCredential contains ECIES(granteePublicKey, n||s).</span>
+        secret, err := zkpcrypto.<span class="fn">DecryptSecret</span>(share.EncryptedCredential, granteePrivKey)
+        <span class="kw">if</span> err != <span class="nu">nil</span> {
+            fmt.<span class="fn">Printf</span>(<span class="st">"  cannot decrypt share: %v\n"</span>, err)
+            <span class="kw">continue</span>
+        }
+
+        <span class="cm">// Step 3: Generate proof (same as owner access flow).</span>
+        <span class="cm">// LeafIndex comes from the on-chain CredentialInserted event for</span>
+        <span class="cm">// this share, or from the PrepareShare response given by the owner.</span>
+        proof, err := client.<span class="fn">GenerateProof</span>(ctx, &amp;zkp.GenerateProofRequest{
+            UserAddress: granteeAddr,
+            FileID:      share.FileID,
+            N:           secret.N.<span class="fn">String</span>(),
+            S:           secret.S.<span class="fn">String</span>(),
+            LeafIndex:   <span class="nu">0</span>, <span class="cm">// set to actual leafIndex from the insert event</span>
+        })
+        <span class="kw">if</span> err != <span class="nu">nil</span> {
+            fmt.<span class="fn">Printf</span>(<span class="st">"  GenerateProof: %v\n"</span>, err)
+            <span class="kw">continue</span>
+        }
+
+        fmt.<span class="fn">Printf</span>(<span class="st">"  proof ready, submit: %s\n"</span>, proof.Calldata.To)
+    }
+}
+      </pre>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ</span>
+      <div>
+        <code>IncomingShares</code> replays on-chain <code>ShareGranted</code> and <code>ShareRevoked</code> events
+        to compute the current active state. Only shares where <code>Active: true</code> are usable.
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Crypto: Key Management ─────────────────────────────────────────────── -->
+  <section id="crypto-keys">
+    <h2>Crypto — Key Management</h2>
+    <p>Import the <code>crypto</code> sub-package standalone — it has no HTTP dependency.</p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="kw">import</span> zkpcrypto <span class="st">"github.com/ssanjeewa/go-sdk/crypto"</span>
+
+<span class="cm">// Generate a fresh secp256k1 key pair (uses crypto/rand internally).</span>
+kp, err := zkpcrypto.<span class="fn">GenerateKeyPair</span>()
+<span class="cm">// kp.PrivateKey → "0x" + 64 hex chars (32 bytes, zero-padded)</span>
+<span class="cm">// kp.PublicKey  → "0x04" + 128 hex chars (65 bytes, uncompressed)</span>
+
+<span class="cm">// Derive public key from an existing private key.</span>
+pubKey, err := zkpcrypto.<span class="fn">PrivateKeyToPublicKey</span>(<span class="st">"0xabc...private...key"</span>)
+
+<span class="cm">// Validate a public key format.</span>
+ok := zkpcrypto.<span class="fn">IsValidPublicKey</span>(pubKey)
+<span class="cm">// true  → 0x04-prefixed, 65 bytes</span>
+<span class="cm">// false → compressed, wrong length, or non-hex</span>
+      </pre>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <tr><th>Function</th><th>Signature</th><th>Notes</th></tr>
+        <tr>
+          <td><code>GenerateKeyPair</code></td>
+          <td><code>() (*KeyPair, error)</code></td>
+          <td>Uses <code>crypto/rand</code>. Pads private key to 64 hex chars (leading-zero safe).</td>
+        </tr>
+        <tr>
+          <td><code>PrivateKeyToPublicKey</code></td>
+          <td><code>(privHex string) (string, error)</code></td>
+          <td>Returns <code>*CryptoError</code> if key is wrong length or invalid hex.</td>
+        </tr>
+        <tr>
+          <td><code>IsValidPublicKey</code></td>
+          <td><code>(pubHex string) bool</code></td>
+          <td>Returns <code>true</code> only for <code>0x04</code>-prefixed 65-byte uncompressed keys.</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Crypto: ECIES ─────────────────────────────────────────────────────── -->
+  <section id="crypto-ecies">
+    <h2>Crypto — ECIES Encryption</h2>
+    <p>
+      ECIES (secp256k1 + AES-256-GCM) is used to encrypt and decrypt the (n, s) credential secrets.
+      The wire format is <strong>byte-for-byte identical</strong> across the Go middleware, the Go SDK,
+      and the Node.js SDK — credentials encrypted by any implementation can be decrypted by any other.
+    </p>
+
+    <h3>Wire format</h3>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-lang">text</span></div>
+      <pre>
+  [ ephPubKey: 65 bytes ] [ IV: 12 bytes ] [ ciphertext: 64 bytes ] [ GCM tag: 16 bytes ]
+  = 157 bytes total = 0x + 314 hex characters
+
+  Plaintext layout: n (32 bytes, big-endian) || s (32 bytes, big-endian) = 64 bytes
+  AES key = SHA-256(ECDH shared secret x-coordinate)
+      </pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="cm">// Encrypt (n, s) for a recipient's public key.</span>
+encrypted, err := zkpcrypto.<span class="fn">EncryptSecret</span>(recipientPubKey, n, s)
+<span class="cm">// encrypted → "0x" + 314 hex chars (157 bytes)</span>
+<span class="cm">// Returns *CryptoError on invalid public key or encryption failure.</span>
+
+<span class="cm">// Decrypt a credential secret with the recipient's private key.</span>
+secret, err := zkpcrypto.<span class="fn">DecryptSecret</span>(encryptedHex, privateKeyHex)
+<span class="cm">// Returns *CryptoError on wire-too-short, bad prefix, GCM auth failure.</span>
+<span class="cm">// The private key is NEVER included in error messages (SEC-01).</span>
+
+fmt.<span class="fn">Println</span>(secret.N) <span class="cm">// *big.Int — BN254 field element</span>
+fmt.<span class="fn">Println</span>(secret.S) <span class="cm">// *big.Int — BN254 field element</span>
+      </pre>
+    </div>
+
+    <div class="callout danger">
+      <span class="callout-icon">⚠</span>
+      <div>
+        <strong>Never log or serialize <code>*DecryptedSecret</code></strong>. The (n, s) values are the plaintext credential secrets. Go does not guarantee memory zeroing — limit the lifetime of <code>DecryptedSecret</code> to the minimum required scope.
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Crypto: BN254 Field ────────────────────────────────────────────────── -->
+  <section id="crypto-field">
+    <h2>Crypto — BN254 Field Validation</h2>
+    <p>
+      All circuit signals (n, s, scope, public signals) must be valid elements of the BN254 scalar field.
+      The SDK validates n and s <strong>before every HTTP call</strong> to <code>GenerateProof</code>,
+      avoiding a wasted round-trip on out-of-range values.
+    </p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="cm">// The BN254 scalar field modulus (package-level *big.Int).</span>
+<span class="cm">// All field elements must satisfy: 0 ≤ v &lt; BN254ScalarField</span>
+fmt.<span class="fn">Println</span>(zkpcrypto.BN254ScalarField)
+<span class="cm">// 21888242871839275222246405745257275088548364400416034343698204186575808495617</span>
+
+<span class="cm">// Check whether a *big.Int is a valid field element.</span>
+ok := zkpcrypto.<span class="fn">IsValidFieldElement</span>(v) <span class="cm">// v != nil &amp;&amp; v &gt;= 0 &amp;&amp; v &lt; BN254ScalarField</span>
+
+<span class="cm">// Parse a decimal string into a validated field element.</span>
+v, err := zkpcrypto.<span class="fn">ParseFieldElement</span>(<span class="st">"42"</span>)
+<span class="cm">// Returns *ValidationError if not a decimal integer or out of range.</span>
+      </pre>
+    </div>
+  </section>
+
+  <!-- ── Configuration ──────────────────────────────────────────────────────── -->
+  <section id="config">
+    <h2>Client Configuration</h2>
+    <p>Pass <code>ClientOption</code> functions to <code>NewClient</code> to tune behaviour.</p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+client, err := zkp.<span class="fn">NewClient</span>(
+    <span class="st">"https://middleware.example.com"</span>,
+    zkp.<span class="fn">WithAPIKey</span>(os.<span class="fn">Getenv</span>(<span class="st">"ZKP_API_KEY"</span>)),     <span class="cm">// required for most endpoints</span>
+    zkp.<span class="fn">WithTimeout</span>(<span class="nu">45</span> * time.Second),               <span class="cm">// default 30s</span>
+    zkp.<span class="fn">WithMaxRetries</span>(<span class="nu">5</span>),                            <span class="cm">// default 3</span>
+    zkp.<span class="fn">WithRetryDelay</span>(<span class="nu">500</span> * time.Millisecond),       <span class="cm">// default 200ms</span>
+)
+      </pre>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+        <tr>
+          <td><code>WithAPIKey(key)</code></td>
+          <td><code>string</code></td>
+          <td><em>none</em></td>
+          <td>Bearer token. Required for all endpoints except <code>Health</code> and <code>Metrics</code>.</td>
+        </tr>
+        <tr>
+          <td><code>WithTimeout(d)</code></td>
+          <td><code>time.Duration</code></td>
+          <td><code>30s</code></td>
+          <td>Per-attempt HTTP request timeout. Set higher for <code>GenerateProof</code> (proof generation ≈ 600 ms).</td>
+        </tr>
+        <tr>
+          <td><code>WithMaxRetries(n)</code></td>
+          <td><code>int</code></td>
+          <td><code>3</code></td>
+          <td>Max retries on 5xx, 429, or transport errors. Set to <code>0</code> to disable retries.</td>
+        </tr>
+        <tr>
+          <td><code>WithRetryDelay(d)</code></td>
+          <td><code>time.Duration</code></td>
+          <td><code>200ms</code></td>
+          <td>Base backoff delay. Each attempt doubles it up to 30 s, with ±10% jitter.</td>
+        </tr>
+      </table>
+    </div>
+
+    <h3>Updating the API key at runtime</h3>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="cm">// Safe to call from any goroutine — uses atomic.Pointer[string] internally.</span>
+<span class="cm">// In-flight requests continue with the old key; new requests use the new key.</span>
+client.<span class="fn">SetAPIKey</span>(<span class="st">"new-rotated-key"</span>)
+      </pre>
+    </div>
+
+    <h3>Retry behaviour</h3>
+    <p>The SDK automatically retries requests on these conditions:</p>
+    <ul>
+      <li><strong>HTTP 500, 502, 503, 504</strong> — server errors</li>
+      <li><strong>HTTP 429</strong> — rate limited. Waits <code>Retry-After</code> header value (seconds) or the computed backoff, whichever is longer.</li>
+      <li><strong>Transport errors</strong> — connection refused, timeout, reset</li>
+    </ul>
+    <p>The SDK does <strong>not</strong> retry on 401, 403, 404, 409, or other 4xx codes — these indicate a client error.</p>
+  </section>
+
+  <!-- ── Error Handling ──────────────────────────────────────────────────────── -->
+  <section id="errors">
+    <h2>Error Handling</h2>
+    <p>All methods return typed errors. Use <code>errors.As</code> to check the specific type:</p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-lang">go</span>
+        <button class="copy-btn" onclick="copyBlock(this)">Copy</button>
+      </div>
+      <pre>
+<span class="kw">import</span> <span class="st">"errors"</span>
+
+_, err := client.<span class="fn">IssueCredential</span>(ctx, req)
+<span class="kw">if</span> err != <span class="nu">nil</span> {
+    <span class="kw">var</span> authErr       *zkp.AuthError
+    <span class="kw">var</span> rateLimitErr  *zkp.RateLimitError
+    <span class="kw">var</span> notFoundErr   *zkp.NotFoundError
+    <span class="kw">var</span> treeFullErr   *zkp.TreeFullError
+    <span class="kw">var</span> networkErr    *zkp.NetworkError
+    <span class="kw">var</span> validationErr *zkp.ValidationError
+    <span class="kw">var</span> serverErr     *zkp.ServerError
+
+    <span class="kw">switch</span> {
+    <span class="kw">case</span> errors.<span class="fn">As</span>(err, &amp;authErr):
+        <span class="cm">// API key missing or invalid</span>
+        fmt.<span class="fn">Println</span>(<span class="st">"check your ZKP_API_KEY"</span>)
+
+    <span class="kw">case</span> errors.<span class="fn">As</span>(err, &amp;rateLimitErr):
+        <span class="cm">// Too many requests — back off</span>
+        fmt.<span class="fn">Printf</span>(<span class="st">"rate limited, retry after %dms\n"</span>, rateLimitErr.RetryAfterMs)
+
+    <span class="kw">case</span> errors.<span class="fn">As</span>(err, &amp;notFoundErr):
+        <span class="cm">// File not registered on-chain (createFile not yet submitted)</span>
+        fmt.<span class="fn">Println</span>(<span class="st">"file not found — is it created on-chain?"</span>)
+
+    <span class="kw">case</span> errors.<span class="fn">As</span>(err, &amp;treeFullErr):
+        <span class="cm">// User Merkle tree at capacity (2^24 leaves)</span>
+        fmt.<span class="fn">Println</span>(<span class="st">"tree full — wallet rotation required"</span>)
+
+    <span class="kw">case</span> errors.<span class="fn">As</span>(err, &amp;networkErr):
+        <span class="cm">// Transport error — middleware unreachable</span>
+        fmt.<span class="fn">Printf</span>(<span class="st">"transport: %v\n"</span>, errors.<span class="fn">Unwrap</span>(networkErr))
+
+    <span class="kw">case</span> errors.<span class="fn">As</span>(err, &amp;validationErr):
+        <span class="cm">// Bad input caught client-side before HTTP call</span>
+        fmt.<span class="fn">Printf</span>(<span class="st">"bad request: %v\n"</span>, validationErr)
+
+    <span class="kw">case</span> errors.<span class="fn">As</span>(err, &amp;serverErr):
+        fmt.<span class="fn">Printf</span>(<span class="st">"server error %d\n"</span>, serverErr.StatusCode)
+
+    <span class="kw">default</span>:
+        fmt.<span class="fn">Printf</span>(<span class="st">"unexpected: %v\n"</span>, err)
+    }
+}
+      </pre>
+    </div>
+
+    <h3>Error type reference</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Type</th><th>Code</th><th>HTTP</th><th>Description</th></tr>
+        <tr><td><code>ValidationError</code></td><td><code>VALIDATION_ERROR</code></td><td>—</td><td>Client-side input validation failed (bad address format, n/s out of BN254 range, empty fileId, etc.)</td></tr>
+        <tr><td><code>AuthError</code></td><td><code>AUTH_ERROR</code></td><td>401</td><td>API key is missing or invalid</td></tr>
+        <tr><td><code>NotFoundError</code></td><td><code>NOT_FOUND_ERROR</code></td><td>404</td><td>File is not registered on-chain, or user address not found</td></tr>
+        <tr><td><code>TreeFullError</code></td><td><code>TREE_FULL</code></td><td>409</td><td>User's Merkle tree has reached depth-24 capacity (16,777,216 leaves)</td></tr>
+        <tr><td><code>RateLimitError</code></td><td><code>RATE_LIMIT_ERROR</code></td><td>429</td><td>Too many requests. <code>RetryAfterMs</code> is populated from the <code>Retry-After</code> response header</td></tr>
+        <tr><td><code>ServerError</code></td><td><code>SERVER_ERROR</code></td><td>5xx</td><td>Middleware internal error. <code>StatusCode</code> is the exact HTTP status code</td></tr>
+        <tr><td><code>NetworkError</code></td><td><code>NETWORK_ERROR</code></td><td>—</td><td>Transport-level failure. Call <code>errors.Unwrap(err)</code> to get the underlying cause</td></tr>
+        <tr><td><code>CryptoError</code></td><td><code>CRYPTO_ERROR</code></td><td>—</td><td>ECIES encrypt/decrypt failure (bad key format, wire too short, GCM auth mismatch). Private key is never included in the message</td></tr>
+        <tr><td><code>APIError</code></td><td><code>API_ERROR</code></td><td>other 4xx</td><td>Any other non-2xx status code not mapped to a specific type</td></tr>
+      </table>
+    </div>
+
+    <p>All error types implement the <code>error</code> interface and format as <code>[ERROR_CODE] message</code>.</p>
+    <p><code>NetworkError</code> implements <code>Unwrap() error</code> so <code>errors.Is</code> and <code>errors.As</code> can traverse the cause chain.</p>
+  </section>
+
+  <!-- ── API Reference ──────────────────────────────────────────────────────── -->
+  <section id="api-ref">
+    <h2>API Methods</h2>
+
+    <!-- Health -->
+    <h3>Health <span class="badge badge-no-auth">no auth</span> <span class="badge badge-get">GET</span></h3>
+    <div class="method-sig">Health(ctx context.Context) (*HealthResponse, error)</div>
+    <p>Returns current service status and chain ID from <code>GET /v1/health</code>. Does not require an API key.</p>
+
+    <!-- Metrics -->
+    <h3>Metrics <span class="badge badge-no-auth">no auth</span> <span class="badge badge-get">GET</span></h3>
+    <div class="method-sig">Metrics(ctx context.Context) (string, error)</div>
+    <p>Returns raw Prometheus metrics text from <code>GET /metrics</code>. Useful for monitoring proof latency, worker pool utilisation, and sync lag.</p>
+
+    <!-- IssueCredential -->
+    <h3>IssueCredential <span class="badge badge-auth">auth</span> <span class="badge badge-post">POST</span></h3>
+    <div class="method-sig">IssueCredential(ctx, *IssueCredentialRequest) (*IssueCredentialResponse, error)</div>
+    <p>Issues a ZK credential for one <code>(userAddress, fileId)</code> pair. Validates inputs before the HTTP call. Errors: <code>*NotFoundError</code> (file not on-chain), <code>*TreeFullError</code> (depth-24 capacity reached).</p>
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+      <tr><td><code>UserAddress</code></td><td>string</td><td>✓</td><td>0x-prefixed 20-byte Ethereum address</td></tr>
+      <tr><td><code>FileID</code></td><td>string</td><td>✓</td><td>0x-prefixed 32-byte hex file identifier</td></tr>
+      <tr><td><code>UserPublicKey</code></td><td>string</td><td>✓</td><td>0x04-prefixed 65-byte uncompressed secp256k1 public key</td></tr>
+      <tr><td><code>Secret</code></td><td>string</td><td>—</td><td>Optional decimal bigint — dev/test only</td></tr>
+    </table></div>
+
+    <!-- IssueCredentialBatch -->
+    <h3>IssueCredentialBatch <span class="badge badge-auth">auth</span> <span class="badge badge-post">POST</span></h3>
+    <div class="method-sig">IssueCredentialBatch(ctx, *BatchIssueCredentialRequest) (*BatchIssueCredentialResponse, error)</div>
+    <p>Issues credentials for 1–20 files atomically. Returns <code>*ValidationError</code> if <code>Files</code> is empty or has more than <code>MaxBatchSize</code> (20) entries. Returns a single <code>InsertCalldata</code> for all leaves.</p>
+
+    <!-- GenerateProof -->
+    <h3>GenerateProof <span class="badge badge-auth">auth</span> <span class="badge badge-post">POST</span></h3>
+    <div class="method-sig">GenerateProof(ctx, *GenerateProofRequest) (*GenerateProofResponse, error)</div>
+    <p>Generates a Groth16 ZK proof for a credential. <code>N</code> and <code>S</code> are validated against the BN254 scalar field before the HTTP call (returns <code>*ValidationError</code> immediately if out of range). Proof generation takes ~600 ms — set <code>WithTimeout</code> ≥ 10s.</p>
+
+    <!-- PrepareShare -->
+    <h3>PrepareShare <span class="badge badge-auth">auth</span> <span class="badge badge-post">POST</span></h3>
+    <div class="method-sig">PrepareShare(ctx, *SharePrepareRequest) (*SharePrepareResponse, error)</div>
+    <p>Prepares a delegated credential share for a grantee. The middleware issues a fresh credential for the grantee and returns two calldatas: <code>InsertCalldata</code> (grantee leaf) and <code>GrantShareCalldata</code> (share record).</p>
+
+    <!-- IncomingShares -->
+    <h3>IncomingShares <span class="badge badge-auth">auth</span> <span class="badge badge-get">GET</span></h3>
+    <div class="method-sig">IncomingShares(ctx, granteeAddress string) (*IncomingSharesResponse, error)</div>
+    <p>Lists all credential shares granted to a grantee address, with their current active status (revoked shares have <code>Active: false</code>). Validates address format before the HTTP call.</p>
+
+    <!-- GetUserPubKey -->
+    <h3>GetUserPubKey <span class="badge badge-auth">auth</span> <span class="badge badge-get">GET</span></h3>
+    <div class="method-sig">GetUserPubKey(ctx, address string) (*UserPubKeyResponse, error)</div>
+    <p>Returns the on-chain registered secp256k1 public key for a wallet address. <code>Registered: false</code> means the user has not yet called <code>registerPublicKey</code> on-chain.</p>
+
+    <!-- ResolveEmail -->
+    <h3>ResolveEmail <span class="badge badge-auth">auth</span> <span class="badge badge-get">GET</span></h3>
+    <div class="method-sig">ResolveEmail(ctx, emailHash string) (*ResolveEmailResponse, error)</div>
+    <p>Resolves a <code>keccak256(email)</code> hash to a wallet address and public key via the <code>ZKClaimUserRegistry</code> contract. <code>emailHash</code> must be a 0x-prefixed bytes32 hex string.</p>
+
+    <!-- SetAPIKey -->
+    <h3>SetAPIKey</h3>
+    <div class="method-sig">SetAPIKey(apiKey string)</div>
+    <p>Atomically updates the Bearer token. Safe to call concurrently with in-flight requests. In-flight requests already dispatched continue with the previous key; new requests use the new key.</p>
+  </section>
+
+  <!-- ── Types Reference ────────────────────────────────────────────────────── -->
+  <section id="types-ref">
+    <h2>Types Reference</h2>
+
+    <h3>ClaimFile</h3>
+    <p>The credential file returned after issuance. <strong>Store this securely</strong> — it is required for proof generation and cannot be regenerated.</p>
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>UserAddress</code></td><td>string</td><td>0x-prefixed wallet address (lowercase)</td></tr>
+      <tr><td><code>FileID</code></td><td>string</td><td>0x-prefixed bytes32 file identifier</td></tr>
+      <tr><td><code>Commitment</code></td><td>string</td><td>0x-prefixed bytes32 Poseidon commitment — stored in Merkle tree</td></tr>
+      <tr><td><code>LeafIndex</code></td><td>uint64</td><td>Position of commitment in user's Merkle tree</td></tr>
+      <tr><td><code>EncryptedSecret</code></td><td>string</td><td>ECIES(userPubKey, n‖s) — 0x-prefixed 314-hex (157 bytes)</td></tr>
+    </table></div>
+
+    <h3>Calldata</h3>
+    <p>A ready-to-submit EVM transaction payload. Pass these fields to your wallet's <code>sendTransaction</code> or UserOp builder.</p>
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Description</th></tr>
+      <tr><td><code>To</code></td><td>Contract address (0x-prefixed)</td></tr>
+      <tr><td><code>Data</code></td><td>ABI-encoded function call (0x-prefixed hex)</td></tr>
+      <tr><td><code>Value</code></td><td>ETH value in wei — typically <code>"0"</code> for these calls</td></tr>
+    </table></div>
+
+    <h3>GenerateProofResponse</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>Proof</code></td><td>*SolidityProof</td><td>Groth16 proof coordinates (A, B, C as decimal strings)</td></tr>
+      <tr><td><code>PublicSignals</code></td><td>[7]string</td><td>root, scope, reqId, rn, fileId, address, metaHash</td></tr>
+      <tr><td><code>Calldata</code></td><td>*Calldata</td><td>ABI-encoded <code>executeRequest</code> call ready for on-chain submission</td></tr>
+      <tr><td><code>RequestNullifier</code></td><td>string</td><td>rn = Poseidon(n, scope, reqId) — stored on-chain to prevent replay</td></tr>
+      <tr><td><code>ReqID</code></td><td>string</td><td>The reqId consumed by this proof</td></tr>
+      <tr><td><code>EncryptedFileKey</code></td><td>string</td><td>Populated on grantee download flows only</td></tr>
+    </table></div>
+
+    <h3>HealthResponse</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>Status</code></td><td>string</td><td><code>"ok"</code> when the middleware is healthy</td></tr>
+      <tr><td><code>ChainID</code></td><td>int64</td><td>Connected chain ID (421614 for Arbitrum Sepolia)</td></tr>
+      <tr><td><code>MiddlewarePubKey</code></td><td>string</td><td>Middleware's secp256k1 public key (if configured)</td></tr>
+      <tr><td><code>LastSyncBlock</code></td><td>uint64</td><td>Admin-only: last synced block number</td></tr>
+      <tr><td><code>TrackedUsers</code></td><td>int</td><td>Admin-only: number of users in the Merkle tree index</td></tr>
+    </table></div>
+
+    <h3>KeyPair (zkpcrypto)</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Format</th><th>Example length</th></tr>
+      <tr><td><code>PrivateKey</code></td><td><code>0x</code> + 64 hex chars (32 bytes, zero-padded)</td><td>66 chars</td></tr>
+      <tr><td><code>PublicKey</code></td><td><code>0x04</code> + 128 hex chars (65 bytes, uncompressed)</td><td>132 chars</td></tr>
+    </table></div>
+
+    <h3>DecryptedSecret (zkpcrypto)</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>N</code></td><td>*big.Int</td><td>Nullifier secret — BN254 field element. Never log or serialize.</td></tr>
+      <tr><td><code>S</code></td><td>*big.Int</td><td>Trapdoor secret — BN254 field element. Never log or serialize.</td></tr>
+    </table></div>
+  </section>
+
+  <!-- ── Security ──────────────────────────────────────────────────────────── -->
+  <section id="security">
+    <h2>Security</h2>
+
+    <h3>Private key handling (SEC-01)</h3>
+    <p>Private keys are <strong>never logged or included in error messages</strong>. <code>CryptoError</code> messages do not embed any key material. GCM authentication failures return a generic message rather than wrapping the underlying Go error (which could expose partial key information in theory).</p>
+
+    <h3>API key safety (SEC-02)</h3>
+    <p>The <code>Authorization: Bearer &lt;key&gt;</code> header is <strong>never included in errors, <code>NetworkError.Cause</code> wrapping, or logs</strong>. The header is applied at the last moment before each HTTP dispatch and stripped before constructing any error struct.</p>
+
+    <h3>Field validation before HTTP (SEC-03)</h3>
+    <p><code>GenerateProof</code> validates <code>n</code> and <code>s</code> against the BN254 scalar field before making any HTTP call. Sending an out-of-range value to the middleware would return a 400, but the SDK rejects it immediately with <code>*ValidationError</code> to avoid the network round-trip.</p>
+
+    <h3>Concurrent API key rotation (SEC-04)</h3>
+    <p><code>SetAPIKey</code> uses <code>sync/atomic.Pointer[string]</code> for the key store. Reading the key and attaching it as a header are done atomically per-request via <code>withHeader</code> (which clones the <code>httpClient</code> immutably). There is no window where a request can see a partially-written key.</p>
+
+    <h3>ECIES random number generation (SEC-05)</h3>
+    <p>Ephemeral key generation for ECIES uses <code>secp256k1.GeneratePrivateKey()</code>, which uses <code>crypto/rand</code> internally — never <code>math/rand</code>.</p>
+
+    <h3>DecryptedSecret lifetime</h3>
+    <div class="callout danger">
+      <span class="callout-icon">⚠</span>
+      <div>
+        Limit the lifetime of <code>*DecryptedSecret</code> to the smallest necessary scope.
+        Do not assign it to a struct field, do not pass it to goroutines, and do not include it in logs or error messages.
+        Go does not guarantee memory zeroing when values go out of scope.
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Compatibility ─────────────────────────────────────────────────────── -->
+  <section id="compat">
+    <h2>Compatibility</h2>
+
+    <div class="table-wrap">
+      <table>
+        <tr><th>Component</th><th>Version / Value</th></tr>
+        <tr><td>Go</td><td>1.22 or later</td></tr>
+        <tr><td>ZKP Middleware</td><td>v1.x — Arbitrum Sepolia, depth-24 Merkle tree</td></tr>
+        <tr><td>Node.js SDK</td><td><code>@zkp-system/node-sdk</code> v2.1.0 (ECIES wire-compatible)</td></tr>
+        <tr><td>Chain</td><td>Arbitrum Sepolia (chainId 421614)</td></tr>
+        <tr><td>ZKClaimRegistryV3</td><td><code>0x9019c0fbCaC853dA04d48CF6049a52b4812C7f28</code></td></tr>
+        <tr><td>ZKClaimServiceV3</td><td><code>0xE0b5BeC8F43d400dC80f66A5c23bA4Accf5f1ccB</code></td></tr>
+        <tr><td>ZKClaimServiceV4</td><td><code>0xE4e0af21691D77baf58B9Cd1AFdaa1a34387fa04</code></td></tr>
+        <tr><td>ECIES wire format</td><td><code>ephPubKey(65) | IV(12) | ciphertext(64) | GCMtag(16)</code> = 157 bytes</td></tr>
+        <tr><td>BN254 scalar field</td><td><code>21888242871839275222246405745257275088548364400416034343698204186575808495617</code></td></tr>
+        <tr><td>Merkle tree depth</td><td>24 (max 16,777,216 leaves per user)</td></tr>
+        <tr><td>ZK circuit constraints</td><td>~6,591 (Groth16, depth-24 MerkleProof + RequestNullifier + CredentialCommitment)</td></tr>
+      </table>
+    </div>
+
+    <h3>ECIES cross-SDK compatibility</h3>
+    <p>
+      The ECIES implementation in <code>github.com/ssanjeewa/go-sdk/crypto</code> is byte-for-byte wire-compatible with:
+    </p>
+    <ul>
+      <li><code>zkp-middleware/internal/crypto/ecies.go</code> (Go middleware)</li>
+      <li><code>@zkp-system/node-sdk/src/crypto/ecies.ts</code> (Node.js SDK)</li>
+    </ul>
+    <p>A credential encrypted by the middleware can be decrypted by the Go SDK, and vice versa.</p>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════ JS ════════════════════════════════════ -->
+<script>
+  // Sidebar active link tracking
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('.sidebar a');
+
+  function updateActive() {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 80) current = s.id;
+    });
+    links.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+
+  // Copy button
+  function copyBlock(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+</script>
+</body>
+</html>
