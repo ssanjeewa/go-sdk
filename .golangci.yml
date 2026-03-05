@@ -1,0 +1,34 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck      # ensure all returned errors are checked
+    - govet         # reports suspicious constructs (same as go vet)
+    - staticcheck   # advanced static analysis (SA*, S1* rules)
+    - bodyclose     # ensure http.Response.Body is always closed
+    - gosec         # security checks (no hardcoded keys, weak crypto, etc.)
+
+linters-settings:
+  errcheck:
+    # Ignore errors on Close() — closing an already-closed body is safe here.
+    ignore: Close
+
+  gosec:
+    excludes:
+      # G404: math/rand is used only for backoff jitter, not for crypto.
+      - G404
+
+issues:
+  # Show all issues, not just the first few per linter.
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude-rules:
+    # Test files may use fmt.Println and unchecked errors for brevity.
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
