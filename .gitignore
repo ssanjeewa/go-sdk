@@ -1,2 +1,6 @@
 coverage.out
 coverage.html
+
+# Internal planning documents — not part of the public SDK
+go-sdk-blueprint.md
+go-sdk-implementation-plan.md
