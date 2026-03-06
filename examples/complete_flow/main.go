@@ -31,7 +31,6 @@ package main
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -174,7 +173,7 @@ func submitCalldata(
 		return "", fmt.Errorf("parse private key: %w", err)
 	}
 
-	sender := crypto.PubkeyToAddress(privKey.PublicKey.(ecdsa.PublicKey))
+	sender := crypto.PubkeyToAddress(privKey.PublicKey)
 
 	toAddr := common.HexToAddress(calldata.To)
 	data, err := hex.DecodeString(strings.TrimPrefix(calldata.Data, "0x"))
